@@ -505,7 +505,6 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     uint256 private _tBurnTotal;
     uint256 private _lightningCycle = 0;
 
-    uint256 private _tTradeCycle = 0;
     uint256 private _tBurnCycle = 0;
     
     uint256 private transferredTokens = 0;
@@ -666,40 +665,38 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
         if(_BURN_FEE >= 500){
         
-        _tTradeCycle = _tTradeCycle.add(amount);
-
 
         // @dev adjust current burnFee depending on the traded tokens during th
 
-            if(_tTradeCycle >= (0 * _DECIMALFACTOR) && _tTradeCycle <= (999999*_DECIMALFACTOR)){
+            if(_tBurnCycle >= (0 * _DECIMALFACTOR) && _tBurnCycle <= (84999*_DECIMALFACTOR)){
                 _setBurnFee(500);
-            } else if(_tTradeCycle >= (1000000 * _DECIMALFACTOR) && _tTradeCycle <= (2000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (85000 * _DECIMALFACTOR) && _tBurnCycle <= (169999 * _DECIMALFACTOR)){
                 _setBurnFee(550);
-            }   else if(_tTradeCycle >= (2000000 * _DECIMALFACTOR) && _tTradeCycle <= (3000000 * _DECIMALFACTOR)){
+            }   else if(_tBurnCycle >= (170000 * _DECIMALFACTOR) && _tBurnCycle <= (254999 * _DECIMALFACTOR)){
                 _setBurnFee(600);
-            }   else if(_tTradeCycle >= (3000000 * _DECIMALFACTOR) && _tTradeCycle <= (4000000 * _DECIMALFACTOR)){
+            }   else if(_tBurnCycle >= (255000 * _DECIMALFACTOR) && _tBurnCycle <= (339999 * _DECIMALFACTOR)){
                 _setBurnFee(650);
-            } else if(_tTradeCycle >= (4000000 * _DECIMALFACTOR) && _tTradeCycle <= (5000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (340000 * _DECIMALFACTOR) && _tBurnCycle <= (424999 * _DECIMALFACTOR)){
                 _setBurnFee(700);
-            } else if(_tTradeCycle >= (5000000 * _DECIMALFACTOR) && _tTradeCycle <= (6000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (425000 * _DECIMALFACTOR) && _tBurnCycle <= (509999 * _DECIMALFACTOR)){
                 _setBurnFee(750);
-            } else if(_tTradeCycle >= (6000000 * _DECIMALFACTOR) && _tTradeCycle <= (7000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (510000 * _DECIMALFACTOR) && _tBurnCycle <= (594999 * _DECIMALFACTOR)){
                 _setBurnFee(800);
-            } else if(_tTradeCycle >= (7000000 * _DECIMALFACTOR) && _tTradeCycle <= (8000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (595000 * _DECIMALFACTOR) && _tBurnCycle <= (679999 * _DECIMALFACTOR)){
                 _setBurnFee(850);
-            } else if(_tTradeCycle >= (8000000 * _DECIMALFACTOR) && _tTradeCycle <= (9000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (680000 * _DECIMALFACTOR) && _tBurnCycle <= (764999 * _DECIMALFACTOR)){
                 _setBurnFee(900);
-            } else if(_tTradeCycle >= (9000000 * _DECIMALFACTOR) && _tTradeCycle <= (10000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (765000 * _DECIMALFACTOR) && _tBurnCycle <= (849999 * _DECIMALFACTOR)){
                 _setBurnFee(950);
-            } else if(_tTradeCycle >= (10000000 * _DECIMALFACTOR) && _tTradeCycle <= (11000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (850000 * _DECIMALFACTOR) && _tBurnCycle <= (934999 * _DECIMALFACTOR)){
                 _setBurnFee(1000);
-            } else if(_tTradeCycle >= (11000000 * _DECIMALFACTOR) && _tTradeCycle <= (12000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (935000 * _DECIMALFACTOR) && _tBurnCycle <= (1019999 * _DECIMALFACTOR)){
                 _setBurnFee(1050);
-            } else if(_tTradeCycle >= (12000000 * _DECIMALFACTOR) && _tTradeCycle <= (13000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (1020000 * _DECIMALFACTOR) && _tBurnCycle <= (1104999 * _DECIMALFACTOR)){
                 _setBurnFee(1100);
-            } else if(_tTradeCycle >= (13000000 * _DECIMALFACTOR) && _tTradeCycle <= (14000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (1105000 * _DECIMALFACTOR) && _tBurnCycle <= (1189999 * _DECIMALFACTOR)){
                 _setBurnFee(1150);
-            } else if(_tTradeCycle >= (14000000 * _DECIMALFACTOR)){
+            } else if(_tBurnCycle >= (1190000 * _DECIMALFACTOR)){
                 _setBurnFee(1200);
             }
             
@@ -777,7 +774,6 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         if(_tBurnCycle >= (1275000 * _DECIMALFACTOR)){
                 uint256 _tRebaseDelta = 637500 * _DECIMALFACTOR;
                 _tBurnCycle = _tBurnCycle.sub((1275000 * _DECIMALFACTOR));
-                _tTradeCycle = 0;
                 _setBurnFee(500);
 
                 _rebase(_tRebaseDelta);
@@ -848,10 +844,6 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
     function _getBurnCycle() public view returns(uint256) {
         return _tBurnCycle;
-    }
-
-    function _getTradedCycle() public view returns(uint256) {
-        return _tTradeCycle;
     }
     
     function _rebase(uint256 supplyDelta) internal {
