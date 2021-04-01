@@ -531,15 +531,15 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
     event TransactionFailed(address indexed destination, uint index, bytes data);
 
-    function name() public view returns (string memory) {
+    function name() public pure returns (string memory) {
         return _NAME;
     }
 
-    function symbol() public view returns (string memory) {
+    function symbol() public pure returns (string memory) {
         return _SYMBOL;
     }
 
-    function decimals() public view returns (uint8) {
+    function decimals() public pure returns (uint8) {
         return _DECIMALS;
     }
 
@@ -834,7 +834,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         return _BURN_FEE;
     }
 
-    function _getMaxTxAmount() private view returns(uint256) {
+    function _getMaxTxAmount() private pure returns(uint256) {
         return _MAX_TX_SIZE;
     }
 
