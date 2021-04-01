@@ -525,6 +525,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     
     constructor () public {
         _rOwned[_msgSender()] = _rTotal;
+        _setBurnFee(500);
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
 
