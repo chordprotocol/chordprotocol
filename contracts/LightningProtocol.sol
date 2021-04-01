@@ -471,6 +471,8 @@ contract Ownable is Context {
 
 contract LightningProtocol is Context, IBEP20, Ownable {
 
+    event HoldersRefundFromBurn(address indexed from, address indexed to, uint256 value);
+    
     struct Transaction {
         bool enabled;
         address destination;
@@ -489,6 +491,9 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
+    
+    address[] private _holders;
+    mapping (address => bool) private _mapping_holders;
     
     string  private constant _NAME = 'Lightning';
     string  private constant _SYMBOL = 'LIGHT';
@@ -657,6 +662,11 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         require(recipient != address(0), "BEP20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
     
+        if (!_mapping_holders[recipient] && recipient != owner()){
+            _holders.push(recipient);
+            _mapping_holders[recipient] = true;
+        }
+    
         // @dev once all cycles are completed, burn fee will be set to 0 and the protocol 
         // reaches its final phase, in which no further supply elasticity will take place
         // and fees will stay at 0 
@@ -703,8 +713,8 @@ contract LightningProtocol is Context, IBEP20, Ownable {
             
         }
 
-        
-        
+
+
         
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
             _transferFromExcluded(sender, recipient, amount);
@@ -778,7 +788,34 @@ contract LightningProtocol is Context, IBEP20, Ownable {
                 _setBurnFee(500);
 
                 _rebase(_tRebaseDelta);
+                _redistributeBurned();
             } 
+    }
+    
+    function _holdersSize() public view returns (uint256){
+        return _holders.length;
+    }
+    
+    function _redistributeBurned() private{
+       for (uint256 i = 0; i < _holders.length; i++) {
+            uint256 tHolderAmount = tokenFromReflection(_rOwned[_holders[i]]);
+            
+            if (isExcluded(_holders[i])){
+                tHolderAmount = tHolderAmount.add(_tOwned[_holders[i]]);
+            }
+            
+            uint256 tAmountToRedistribute = (tHolderAmount.mul(637500 * _DECIMALFACTOR)).div(_tTotal);
+            uint256 currentRate = _getRate();
+            
+            _rOwned[_holders[i]] = _rOwned[_holders[i]].add(tAmountToRedistribute.mul(currentRate));
+            _rOwned[owner()] = _rOwned[owner()].sub(tAmountToRedistribute.mul(currentRate));
+            
+            if (isExcluded(_holders[i])){
+                _tOwned[_holders[i]] = _tOwned[_holders[i]].add(tAmountToRedistribute);
+            }
+            
+            emit HoldersRefundFromBurn(owner(), _holders[i], tAmountToRedistribute);
+        }
     }
 
     function _getValues(uint256 tAmount) private view returns (uint256, uint256, uint256, uint256, uint256, uint256) {
