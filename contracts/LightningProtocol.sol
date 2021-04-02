@@ -512,28 +512,15 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
     uint256 private _tBurnCycle = 0;
     
-    uint256 private transferredTokens = 0;
-    uint256 private tokenBatchCount = 0;
     uint256 private     _BURN_FEE = 0;
     uint256 private     _TAX_FEE = 0;
     uint256 private constant _MAX_TX_SIZE = 100000000 * _DECIMALFACTOR;
 
-    // TOTAL_GONS is a multiple of INITIAL_FRAGMENTS_SUPPLY so that _gonsPerFragment is an integer.
-    // Use the highest value that fits in a uint256 for max granularity.
-
-    // MAX_SUPPLY = maximum integer < (sqrt(4*TOTAL_GONS + 1) - 1) / 2
-    uint256 private constant MAX_SUPPLY = ~uint128(0);  // (2^128) - 1  
-
-    uint256 private _gonsPerFragment;
-    mapping(address => uint256) private _gonBalances;
-
-    
     constructor () public {
         _rOwned[_msgSender()] = _rTotal;
         _setBurnFee(500);
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
-
 
     event TransactionFailed(address indexed destination, uint index, bytes data);
 
