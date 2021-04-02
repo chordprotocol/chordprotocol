@@ -516,9 +516,53 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     uint256 private     _TAX_FEE = 0;
     uint256 private constant _MAX_TX_SIZE = 100000000 * _DECIMALFACTOR;
 
-    constructor () public {
+    //fee range have to be provided with the multiplier of 100 (5% is 500)
+    uint256 public  fee_left_range;
+    uint256 public  fee_right_range;
+    //the step in percent, according to which the fee has to distribute equally
+    //better to set it as a divider of (fee_right_range - fee_left_range)
+    uint256 public fee_change_frequency;
+    //amount of cycles to do
+    uint256 public total_cycle_amount;
+    //money to burn without a decimal factor 
+    uint256 public amount_to_burn;
+    //percent has to be provided with the multiplier of 100 (50% is 5000)
+    uint256 public percent_for_redistribution;
+    
+    //amount of different fee to set
+    uint256 public fee_step_count;
+    uint256 public tAmount_per_fee_change;
+    uint256 public amount_for_redistribution;
+    uint256 public final_tAmount;
+
+    //TODO: transfer total coins amount to constructor
+
+    constructor (
+        uint256 _fee_left_range,
+        uint256 _fee_right_range,
+        uint256 _fee_change_frequency,
+        uint256 _total_cycle_amount,
+        uint256 _amount_to_burn,
+        uint256 _percent_for_redistribution
+    ) public {
         _rOwned[_msgSender()] = _rTotal;
-        _setBurnFee(500);
+        
+        fee_left_range = _fee_left_range;
+        fee_right_range = _fee_right_range;
+        fee_change_frequency = _fee_change_frequency;
+        total_cycle_amount = _total_cycle_amount;
+        amount_to_burn = _amount_to_burn;
+        percent_for_redistribution = _percent_for_redistribution;
+        
+        fee_step_count = (fee_right_range.sub(fee_left_range)).div(fee_change_frequency) + 1;
+        tAmount_per_fee_change = amount_to_burn.div(fee_step_count);
+        amount_for_redistribution = (amount_to_burn.mul(percent_for_redistribution)).div(_GRANULARITY).div(_GRANULARITY);
+        final_tAmount = _tTotal.sub(_total_cycle_amount.mul(amount_to_burn.sub(amount_for_redistribution)));
+        
+        if (total_cycle_amount != 0){
+            _setBurnFee(fee_left_range);
+        }
+        
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
 
@@ -643,12 +687,13 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
     }
-
+    
     function _transfer(address sender, address recipient, uint256 amount) private {
         require(sender != address(0), "BEP20: transfer from the zero address");
         require(recipient != address(0), "BEP20: transfer to the zero address");
         require(amount > 0, "Transfer amount must be greater than zero");
     
+        //not adding owner for redistribution, because he will get the rest
         if (!_mapping_holders[recipient] && recipient != owner()){
             _holders.push(recipient);
             _mapping_holders[recipient] = true;
@@ -661,47 +706,16 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         if(sender != owner() && recipient != owner())
             require(amount <= _MAX_TX_SIZE, "Transfer amount exceeds the maxTxAmount.");
 
-        if(_BURN_FEE >= 500){
-        
+        //TODO: calculate fee after transfer (???)
 
-        // @dev adjust current burnFee depending on the traded tokens during th
-
-            if(_tBurnCycle >= (0 * _DECIMALFACTOR) && _tBurnCycle <= (84999*_DECIMALFACTOR)){
-                _setBurnFee(500);
-            } else if(_tBurnCycle >= (85000 * _DECIMALFACTOR) && _tBurnCycle <= (169999 * _DECIMALFACTOR)){
-                _setBurnFee(550);
-            }   else if(_tBurnCycle >= (170000 * _DECIMALFACTOR) && _tBurnCycle <= (254999 * _DECIMALFACTOR)){
-                _setBurnFee(600);
-            }   else if(_tBurnCycle >= (255000 * _DECIMALFACTOR) && _tBurnCycle <= (339999 * _DECIMALFACTOR)){
-                _setBurnFee(650);
-            } else if(_tBurnCycle >= (340000 * _DECIMALFACTOR) && _tBurnCycle <= (424999 * _DECIMALFACTOR)){
-                _setBurnFee(700);
-            } else if(_tBurnCycle >= (425000 * _DECIMALFACTOR) && _tBurnCycle <= (509999 * _DECIMALFACTOR)){
-                _setBurnFee(750);
-            } else if(_tBurnCycle >= (510000 * _DECIMALFACTOR) && _tBurnCycle <= (594999 * _DECIMALFACTOR)){
-                _setBurnFee(800);
-            } else if(_tBurnCycle >= (595000 * _DECIMALFACTOR) && _tBurnCycle <= (679999 * _DECIMALFACTOR)){
-                _setBurnFee(850);
-            } else if(_tBurnCycle >= (680000 * _DECIMALFACTOR) && _tBurnCycle <= (764999 * _DECIMALFACTOR)){
-                _setBurnFee(900);
-            } else if(_tBurnCycle >= (765000 * _DECIMALFACTOR) && _tBurnCycle <= (849999 * _DECIMALFACTOR)){
-                _setBurnFee(950);
-            } else if(_tBurnCycle >= (850000 * _DECIMALFACTOR) && _tBurnCycle <= (934999 * _DECIMALFACTOR)){
-                _setBurnFee(1000);
-            } else if(_tBurnCycle >= (935000 * _DECIMALFACTOR) && _tBurnCycle <= (1019999 * _DECIMALFACTOR)){
-                _setBurnFee(1050);
-            } else if(_tBurnCycle >= (1020000 * _DECIMALFACTOR) && _tBurnCycle <= (1104999 * _DECIMALFACTOR)){
-                _setBurnFee(1100);
-            } else if(_tBurnCycle >= (1105000 * _DECIMALFACTOR) && _tBurnCycle <= (1189999 * _DECIMALFACTOR)){
-                _setBurnFee(1150);
-            } else if(_tBurnCycle >= (1190000 * _DECIMALFACTOR)){
-                _setBurnFee(1200);
+        if(_BURN_FEE >= fee_left_range){
+            uint256 _burnCycleMultiplier = _tBurnCycle.div(tAmount_per_fee_change);
+            uint256 _calculatedBurnFee = fee_left_range.add(fee_change_frequency.mul(_burnCycleMultiplier));
+            if (_calculatedBurnFee != _BURN_FEE){
+                _setBurnFee(_calculatedBurnFee); 
             }
-            
         }
-
-
-
+        
         
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
             _transferFromExcluded(sender, recipient, amount);
@@ -769,10 +783,10 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
 
         // @dev after 1,275,000 tokens burnt, supply is expanded by 637,500 tokens 
-        if(_tBurnCycle >= (1275000 * _DECIMALFACTOR)){
-                uint256 _tRebaseDelta = 637500 * _DECIMALFACTOR;
-                _tBurnCycle = _tBurnCycle.sub((1275000 * _DECIMALFACTOR));
-                _setBurnFee(500);
+        if(_tBurnCycle >= (amount_to_burn)){
+                uint256 _tRebaseDelta = amount_for_redistribution;
+                _tBurnCycle = _tBurnCycle.sub((amount_to_burn));
+                _setBurnFee(fee_left_range);
 
                 _rebase(_tRebaseDelta);
                 _redistributeBurned();
@@ -791,7 +805,8 @@ contract LightningProtocol is Context, IBEP20, Ownable {
                 tHolderAmount = tHolderAmount.add(_tOwned[_holders[i]]);
             }
             
-            uint256 tAmountToRedistribute = (tHolderAmount.mul(637500 * _DECIMALFACTOR)).div(_tTotal);
+            //TODO: _tTotal has to be without decimal factor
+            uint256 tAmountToRedistribute = (tHolderAmount.mul(amount_for_redistribution)).div(_tTotal);
             uint256 currentRate = _getRate();
             
             _rOwned[_holders[i]] = _rOwned[_holders[i]].add(tAmountToRedistribute.mul(currentRate));
@@ -846,12 +861,12 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     
 
     function _setBurnFee(uint256 burnFee) private {
-        require(burnFee >= 0 && burnFee <= 1500, 'burnFee should be in 0 - 15');
+        require(burnFee >= 0 && burnFee <= fee_right_range, 'burnFee should be in 0 to fee_right_range');
         _BURN_FEE = burnFee;
     }
     
     function _setFeeStage(uint256 burnFee) external onlyOwner() {
-        require(burnFee >= 0 && burnFee <= 1500, 'burnFee should be in 0 - 15');
+        require(burnFee >= 0 && burnFee <= fee_right_range, 'burnFee should be in 0 to fee_right_range');
         _BURN_FEE = burnFee;
     }
 
@@ -878,7 +893,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
 
         // after 156, the protocol reaches its final stage
         // fees will be set to 0 and the remaining total supply will be 550,000
-        if(_lightningCycle > 156 || _tTotal <= 550000 * _DECIMALFACTOR){
+        if(_lightningCycle > total_cycle_amount || _tTotal <= final_tAmount){
             _initializeFinalStage();
         }
     }
