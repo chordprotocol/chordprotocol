@@ -497,14 +497,13 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     
     string  private constant _NAME = 'Lightning';
     string  private constant _SYMBOL = 'LIGHT';
-    uint8   private constant _DECIMALS = 8;
+    uint8   private _DECIMALS;
    
     uint256 private constant _MAX = ~uint256(0);
-    uint256 private constant _DECIMALFACTOR = 10 ** uint256(_DECIMALS);
     uint256 private constant _GRANULARITY = 100;
     
-    uint256 private _tTotal = 100000000 * _DECIMALFACTOR;
-    uint256 private _rTotal = (_MAX - (_MAX % _tTotal));
+    uint256 private _tTotal;
+    uint256 private _rTotal;
     
     uint256 private _tFeeTotal;
     uint256 private _tBurnTotal;
@@ -514,7 +513,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     
     uint256 private     _BURN_FEE = 0;
     uint256 private     _TAX_FEE = 0;
-    uint256 private constant _MAX_TX_SIZE = 100000000 * _DECIMALFACTOR;
+    uint256 private _MAX_TX_SIZE;
 
     //fee range have to be provided with the multiplier of 100 (5% is 500)
     uint256 public  fee_left_range;
@@ -535,9 +534,10 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     uint256 public amount_for_redistribution;
     uint256 public final_tAmount;
 
-    //TODO: transfer total coins amount to constructor
 
     constructor (
+        uint256 _tTotal_amount,
+        uint8 _decimals,
         uint256 _fee_left_range,
         uint256 _fee_right_range,
         uint256 _fee_change_frequency,
@@ -545,8 +545,6 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         uint256 _amount_to_burn,
         uint256 _percent_for_redistribution
     ) public {
-        _rOwned[_msgSender()] = _rTotal;
-        
         fee_left_range = _fee_left_range;
         fee_right_range = _fee_right_range;
         fee_change_frequency = _fee_change_frequency;
@@ -554,6 +552,11 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         amount_to_burn = _amount_to_burn;
         percent_for_redistribution = _percent_for_redistribution;
         
+        _DECIMALS = _decimals;
+        _tTotal = _tTotal_amount;
+        _rTotal = (_MAX - (_MAX % _tTotal));
+        _MAX_TX_SIZE = _tTotal;
+    
         fee_step_count = (fee_right_range.sub(fee_left_range)).div(fee_change_frequency) + 1;
         tAmount_per_fee_change = amount_to_burn.div(fee_step_count);
         amount_for_redistribution = (amount_to_burn.mul(percent_for_redistribution)).div(_GRANULARITY).div(_GRANULARITY);
@@ -562,6 +565,8 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         if (total_cycle_amount != 0){
             _setBurnFee(fee_left_range);
         }
+        
+        _rOwned[_msgSender()] = _rTotal;
         
         emit Transfer(address(0), _msgSender(), _tTotal);
     }
@@ -576,7 +581,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         return _SYMBOL;
     }
 
-    function decimals() public pure returns (uint8) {
+    function decimals() public view returns (uint8) {
         return _DECIMALS;
     }
 
@@ -874,7 +879,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         return _BURN_FEE;
     }
 
-    function _getMaxTxAmount() private pure returns(uint256) {
+    function _getMaxTxAmount() private view returns(uint256) {
         return _MAX_TX_SIZE;
     }
 
