@@ -545,6 +545,8 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         uint256 _amount_to_burn,
         uint256 _percent_for_redistribution
     ) public {
+        require (_fee_left_range < _fee_right_range, "Invalid burn fee range");
+        
         fee_left_range = _fee_left_range;
         fee_right_range = _fee_right_range;
         fee_change_frequency = _fee_change_frequency;
