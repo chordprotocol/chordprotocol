@@ -711,17 +711,6 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         if(sender != owner() && recipient != owner())
             require(amount <= _MAX_TX_SIZE, "Transfer amount exceeds the maxTxAmount.");
 
-        //TODO: calculate fee after transfer (???)
-
-        if(_BURN_FEE >= fee_left_range){
-            uint256 _burnCycleMultiplier = _tBurnCycle.div(tAmount_per_fee_change);
-            uint256 _calculatedBurnFee = fee_left_range.add(fee_change_frequency.mul(_burnCycleMultiplier));
-            if (_calculatedBurnFee != _BURN_FEE){
-                _setBurnFee(_calculatedBurnFee); 
-            }
-        }
-        
-        
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
             _transferFromExcluded(sender, recipient, amount);
         } else if (!_isExcluded[sender] && _isExcluded[recipient]) {
@@ -732,6 +721,18 @@ contract LightningProtocol is Context, IBEP20, Ownable {
             _transferBothExcluded(sender, recipient, amount);
         } else {
             _transferStandard(sender, recipient, amount);
+        }
+        
+        _updateFee();
+    }
+    
+    function _updateFee() private{
+        if(_BURN_FEE >= fee_left_range){
+            uint256 _burnCycleMultiplier = _tBurnCycle.div(tAmount_per_fee_change);
+            uint256 _calculatedBurnFee = fee_left_range.add(fee_change_frequency.mul(_burnCycleMultiplier));
+            if (_calculatedBurnFee != _BURN_FEE){
+                _setBurnFee(_calculatedBurnFee); 
+            }
         }
     }
 
@@ -810,7 +811,6 @@ contract LightningProtocol is Context, IBEP20, Ownable {
                 tHolderAmount = tHolderAmount.add(_tOwned[_holders[i]]);
             }
             
-            //TODO: _tTotal has to be without decimal factor
             uint256 tAmountToRedistribute = (tHolderAmount.mul(amount_for_redistribution)).div(_tTotal);
             uint256 currentRate = _getRate();
             
