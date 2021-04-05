@@ -50,14 +50,34 @@ contract('LightningProtocolTest', async (accounts) => {
       assert.equal(BigNumber(await lightToken.balanceOf(SOMEBODY)).toString(),previousBalance.plus((BigNumber(2000000).multipliedBy(DECIMAL_FACTOR)).minus(BigNumber(110000).multipliedBy(DECIMAL_FACTOR))).toString());
     });
     it ('fee switch cycle and stay same', async () => {
+      let balance = BigNumber(26000000).multipliedBy(DECIMAL_FACTOR);
+      balance = BigNumber(await lightToken.reflectionFromToken(balance, true));
       await lightToken.transfer(SOMEBODY, BigNumber(26000000).multipliedBy(DECIMAL_FACTOR));
       assert.equal(BigNumber(await lightToken._getBurnFee()).toString(), BigNumber(500).toString());
       assert.equal(BigNumber(await lightToken._getCycle()).toString(), BigNumber(1).toString());
       assert.equal(BigNumber(await lightToken.totalBurn()).toString(), (BigNumber(1300000).multipliedBy(DECIMAL_FACTOR)).toString());
+
       let totalSupply = BigNumber(100000000-1300000+637500).multipliedBy(DECIMAL_FACTOR);
       assert.equal(BigNumber(await lightToken.totalSupply()).toString(), totalSupply.toString());
-      let balance = BigNumber(26000000-1300000).multipliedBy(DECIMAL_FACTOR);
-      assert.equal(BigNumber(await lightToken.balanceOf(SOMEBODY)).toString(),(balance.plus(((BigNumber((26000000-1300000)*(637500)).multipliedBy(DECIMAL_FACTOR)).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply))).toString());
+
+      balance = BigNumber( await lightToken.tokenFromReflection(balance));
+      
+      assert.equal(BigNumber(await lightToken.balanceOf(SOMEBODY)).toString(),(balance.plus(((BigNumber(637500).multipliedBy(balance)).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply))).toString());
     });
   });
+
+  // describe('transfer() to excluded account', async  () => {
+  //   it ('fee switch cycle and stay same', async () => {
+  //     await lightToken.transfer(SOMEBODY, BigNumber(26000000).multipliedBy(DECIMAL_FACTOR));
+  //     assert.equal(BigNumber(await lightToken._getBurnFee()).toString(), BigNumber(500).toString());
+  //     assert.equal(BigNumber(await lightToken._getCycle()).toString(), BigNumber(1).toString());
+  //     assert.equal(BigNumber(await lightToken.totalBurn()).toString(), (BigNumber(1300000).multipliedBy(DECIMAL_FACTOR)).toString());
+  //     let totalSupply = BigNumber(100000000-1300000+637500).multipliedBy(DECIMAL_FACTOR);
+  //     assert.equal(BigNumber(await lightToken.totalSupply()).toString(), totalSupply.toString());
+  //
+  //     //TODO: test for balance and redistribution
+  //     //let balance = BigNumber(26000000-1300000).multipliedBy(DECIMAL_FACTOR);
+  //     //assert.equal(BigNumber(await lightToken.balanceOf(SOMEBODY)).toString(),(balance.plus(((BigNumber((26000000-1300000)*(637500)).multipliedBy(DECIMAL_FACTOR)).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply))).toString());
+  //   });
+  // });
 });
