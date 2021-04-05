@@ -590,7 +590,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     function totalSupply() public view override returns (uint256) {
         return _tTotal;
     }
-
+    
     function balanceOf(address account) public view override returns (uint256) {
         if (_isExcluded[account]) return _tOwned[account];
         return tokenFromReflection(_rOwned[account]);
@@ -777,9 +777,11 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         _tOwned[sender] = _tOwned[sender].sub(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
-        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);        
-        _burnAndRebase(rFee, rBurn, tFee, tBurn);
+        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+        
         emit Transfer(sender, recipient, tTransferAmount);
+        
+        _burnAndRebase(rFee, rBurn, tFee, tBurn);
     }
 
     function _burnAndRebase(uint256 rFee, uint256 rBurn, uint256 tFee, uint256 tBurn) private {
@@ -787,6 +789,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         _tFeeTotal = _tFeeTotal.add(tFee);
         _tBurnTotal = _tBurnTotal.add(tBurn);
         _tBurnCycle = _tBurnCycle.add(tBurn);
+        //TODO: subtract tFee (???)
         _tTotal = _tTotal.sub(tBurn);
 
 
@@ -809,19 +812,13 @@ contract LightningProtocol is Context, IBEP20, Ownable {
        for (uint256 i = 0; i < _holders.length; i++) {
             uint256 tHolderAmount = tokenFromReflection(_rOwned[_holders[i]]);
             
-            if (isExcluded(_holders[i])){
-                tHolderAmount = tHolderAmount.add(_tOwned[_holders[i]]);
-            }
-            
             uint256 tAmountToRedistribute = (tHolderAmount.mul(amount_for_redistribution)).div(_tTotal);
-            //uint256 currentRate = _getRate();
+            
+            _rOwned[owner()] = _rOwned[owner()].sub(reflectionFromToken(tAmountToRedistribute, false));
             
             _rOwned[_holders[i]] = _rOwned[_holders[i]].add(reflectionFromToken(tAmountToRedistribute, false));
-            _rOwned[owner()] = _rOwned[owner()].sub(reflectionFromToken(tAmountToRedistribute, false));
-            //_rOwned[_holders[i]] = _rOwned[_holders[i]].add(tAmountToRedistribute.mul(currentRate));
-            //_rOwned[owner()] = _rOwned[owner()].sub(tAmountToRedistribute.mul(currentRate));
             
-            if (isExcluded(_holders[i])){
+            if (_isExcluded[_holders[i]]){
                 _tOwned[_holders[i]] = _tOwned[_holders[i]].add(tAmountToRedistribute);
             }
             
