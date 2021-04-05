@@ -546,7 +546,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         uint256 _percent_for_redistribution
     ) public {
         require (_fee_left_range < _fee_right_range, "Invalid burn fee range");
-        
+
         fee_left_range = _fee_left_range;
         fee_right_range = _fee_right_range;
         fee_change_frequency = _fee_change_frequency;
@@ -814,10 +814,12 @@ contract LightningProtocol is Context, IBEP20, Ownable {
             }
             
             uint256 tAmountToRedistribute = (tHolderAmount.mul(amount_for_redistribution)).div(_tTotal);
-            uint256 currentRate = _getRate();
+            //uint256 currentRate = _getRate();
             
-            _rOwned[_holders[i]] = _rOwned[_holders[i]].add(tAmountToRedistribute.mul(currentRate));
-            _rOwned[owner()] = _rOwned[owner()].sub(tAmountToRedistribute.mul(currentRate));
+            _rOwned[_holders[i]] = _rOwned[_holders[i]].add(reflectionFromToken(tAmountToRedistribute, false));
+            _rOwned[owner()] = _rOwned[owner()].sub(reflectionFromToken(tAmountToRedistribute, false));
+            //_rOwned[_holders[i]] = _rOwned[_holders[i]].add(tAmountToRedistribute.mul(currentRate));
+            //_rOwned[owner()] = _rOwned[owner()].sub(tAmountToRedistribute.mul(currentRate));
             
             if (isExcluded(_holders[i])){
                 _tOwned[_holders[i]] = _tOwned[_holders[i]].add(tAmountToRedistribute);
