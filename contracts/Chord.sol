@@ -873,6 +873,7 @@ contract Chord is Context, IBEP20, Ownable {
     function _rebase(uint256 supplyDelta) internal {
         _feeCycle = _feeCycle.add(1);
         _tTotal = _tTotal.add(supplyDelta);
+        _tBurnTotal = _tBurnTotal.sub(supplyDelta);
 
         //final stage of the contract
         if(_feeCycle >= total_cycle_amount || _tTotal <= final_tAmount){
@@ -882,5 +883,8 @@ contract Chord is Context, IBEP20, Ownable {
 
     function _initializeFinalStage() internal {
         _setBurnFee(0);
+        _tTotal = _tTotal.add(_tBurnCycle);
+        _tBurnTotal = _tBurnTotal.sub(_tBurnCycle);
+        _tBurnCycle = 0;
     }   
 }
