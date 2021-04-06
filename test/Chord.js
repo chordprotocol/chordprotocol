@@ -176,9 +176,8 @@ contract('ChordTest', async (accounts) => {
                 var ownerBalance = BigNumber(await chordToken.balanceOf(OWNER));
                 var i , j;
                 i = ownerBalance.dividedToIntegerBy(totalSupply);
-                //if ((ownerBalance.modulo(totalSupply)).isEqualTo(BigNumber(0))) {
-                    i = i.minus(BigNumber(1));
-               // }
+                
+                i = i.minus(BigNumber(1));
 
                 for (; i.comparedTo(BigNumber(0)) == 1; i = i.minus(BigNumber(1))) {
                     if(t.comparedTo(cycles) != -1){
@@ -191,9 +190,6 @@ contract('ChordTest', async (accounts) => {
 
                 var somebodyBalance = BigNumber(await chordToken.balanceOf(SOMEBODY));
                 j = somebodyBalance.dividedToIntegerBy(totalSupply);
-
-                //console.log("i: " + i.toString() + " j: " + j.toString());
-
 
                 for (; j.comparedTo(BigNumber(0)) == 1; j = j.minus(BigNumber(1))) {
                     if(t.comparedTo(cycles) != -1){
