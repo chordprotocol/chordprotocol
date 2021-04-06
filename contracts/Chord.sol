@@ -869,7 +869,7 @@ contract Chord is Context, IBEP20, Ownable {
         _tTotal = _tTotal.add(supplyDelta);
 
         //final stage of the contract
-        if(_feeCycle > total_cycle_amount || _tTotal <= final_tAmount){
+        if(_feeCycle >= total_cycle_amount || _tTotal <= final_tAmount){
             _initializeFinalStage();
         }
     }

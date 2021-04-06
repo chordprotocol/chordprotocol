@@ -100,6 +100,23 @@ contract('ChordTest', async (accounts) => {
             assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(2).toString());
             assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000 + 60).multipliedBy(DECIMAL_FACTOR)).toString());
         });
+        it('transact without fee when cycle finished', async () => {
+            let chordTokenCycle = await Chord.new(
+                BigNumber(100000000).multipliedBy(DECIMAL_FACTOR),
+                8,
+                500,
+                1000,
+                50,
+                1,
+                BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
+                5000);
+
+            await chordTokenCycle.transfer(SOMEBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
+            await chordTokenCycle.transfer(SOMEBODY, BigNumber(11000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordTokenCycle._getCycle()).toString(), BigNumber(1).toString());
+            assert.equal(BigNumber(await chordTokenCycle._getBurnFee()).toString(), BigNumber(0).toString());
+        });
     });
     describe('includeAccount()', async () => {
         it('must revert on included', async () => {
