@@ -1,28 +1,3 @@
-/**
- *Submitted for verification at BscScan.com on 2021-03-03
-*/
-
-/**
- *Submitted for verification at BscScan.com on ---
-*/
-
-/**
-
-// Lightning Protocol is a Accelerating Deflationary Supply Elasticity Token that functions in cycles 
-// Each cycle, the burnRate is increased in 0.5% increments for each 1,000,000 Tokens transacted
-// After the burnRate cap is reached, the burnrate will be reset to the initial rate
-// Furthermore, a rebase will be called which rebases 50% of the Tokens burnt during the previous cycle
-
-
-// SPDX-License-Identifier: MIT
-
-
-/*
- * Telegram: https://t.me/lightningprotocol
- * Website: https://lightningprotocol.finance
- */
- 
-
 pragma solidity ^0.6.0;
 
 
@@ -469,7 +444,7 @@ contract Ownable is Context {
     }
 }
 
-contract LightningProtocol is Context, IBEP20, Ownable {
+contract Chord is Context, IBEP20, Ownable {
 
     event HoldersRefundFromBurn(address indexed from, address indexed to, uint256 value);
     
@@ -495,8 +470,8 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     address[] private _holders;
     mapping (address => bool) private _mapping_holders;
     
-    string  private constant _NAME = 'Lightning';
-    string  private constant _SYMBOL = 'LIGHT';
+    string  private constant _NAME = 'Chord';
+    string  private constant _SYMBOL = 'CHORD';
     uint8   private _DECIMALS;
    
     uint256 private constant _MAX = ~uint256(0);
@@ -507,7 +482,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     
     uint256 private _tFeeTotal;
     uint256 private _tBurnTotal;
-    uint256 private _lightningCycle = 0;
+    uint256 private _feeCycle = 0;
 
     uint256 private _tBurnCycle = 0;
     
@@ -789,11 +764,8 @@ contract LightningProtocol is Context, IBEP20, Ownable {
         _tFeeTotal = _tFeeTotal.add(tFee);
         _tBurnTotal = _tBurnTotal.add(tBurn);
         _tBurnCycle = _tBurnCycle.add(tBurn);
-        //TODO: subtract tFee (???)
         _tTotal = _tTotal.sub(tBurn);
 
-
-        // @dev after 1,275,000 tokens burnt, supply is expanded by 637,500 tokens 
         if(_tBurnCycle >= (amount_to_burn)){
                 uint256 _tRebaseDelta = amount_for_redistribution;
                 _tBurnCycle = _tBurnCycle.sub((amount_to_burn));
@@ -885,7 +857,7 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     }
 
     function _getCycle() public view returns(uint256) {
-        return _lightningCycle;
+        return _feeCycle;
     }
 
     function _getBurnCycle() public view returns(uint256) {
@@ -893,13 +865,11 @@ contract LightningProtocol is Context, IBEP20, Ownable {
     }
     
     function _rebase(uint256 supplyDelta) internal {
-        _lightningCycle = _lightningCycle.add(1);
+        _feeCycle = _feeCycle.add(1);
         _tTotal = _tTotal.add(supplyDelta);
 
-
-        // after 156, the protocol reaches its final stage
-        // fees will be set to 0 and the remaining total supply will be 550,000
-        if(_lightningCycle > total_cycle_amount || _tTotal <= final_tAmount){
+        //final stage of the contract
+        if(_feeCycle > total_cycle_amount || _tTotal <= final_tAmount){
             _initializeFinalStage();
         }
     }
