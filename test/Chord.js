@@ -7,6 +7,7 @@ contract('ChordTest', async (accounts) => {
     let chordToken;
     let chordTokenCycle;
 
+    const OWNER = accounts[0];
     const SOMEBODY = accounts[1];
     const NOBODY = accounts[2];
     const ANYBODY = accounts[3];
@@ -66,7 +67,7 @@ contract('ChordTest', async (accounts) => {
             await chordToken.transfer(SOMEBODY, BigNumber(11000000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(550).toString());
             assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
-            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(550000).multipliedBy(DECIMAL_FACTOR)).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(550000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
 
             let totalSupply = BigNumber(100000000 - 550000 + 250000).multipliedBy(DECIMAL_FACTOR);
             assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
@@ -81,7 +82,7 @@ contract('ChordTest', async (accounts) => {
             await chordToken.transfer(SOMEBODY, BigNumber(20500000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
             assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
-            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1025000).multipliedBy(DECIMAL_FACTOR)).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1025000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
 
             let totalSupply = BigNumber(100000000 - 1025000 + 250000).multipliedBy(DECIMAL_FACTOR);
             assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
@@ -96,7 +97,7 @@ contract('ChordTest', async (accounts) => {
             await chordToken.transfer(SOMEBODY, BigNumber(22000000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(600).toString());
             assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
-            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000).multipliedBy(DECIMAL_FACTOR)).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
 
             let totalSupply = BigNumber(100000000 - 1100000 + 250000).multipliedBy(DECIMAL_FACTOR);
             assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
@@ -108,7 +109,7 @@ contract('ChordTest', async (accounts) => {
             await chordToken.transfer(SOMEBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(600).toString());
             assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(2).toString());
-            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000 + 60).multipliedBy(DECIMAL_FACTOR)).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000 + 60).multipliedBy(DECIMAL_FACTOR).minus(BigNumber(await chordToken.amount_for_redistribution()).multipliedBy(BigNumber(2)))).toString());
         });
         it('transact without fee when cycle finished', async () => {
             await chordTokenCycle.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
@@ -146,4 +147,69 @@ contract('ChordTest', async (accounts) => {
             assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).comparedTo(BigNumber(await chordToken.balanceOf(NOBODY))), 1);
         });
     });
-});
+    describe('CHORD parameters test', async () => {
+        it('500 000 CHORDS are burned each cycle', async () => {
+            assert.equal(BigNumber(await chordToken.amount_to_burn()).toString(), (BigNumber(500000).multipliedBy(DECIMAL_FACTOR)).toString());
+        });
+        it('fee raises from 5% to 10%', async () => {
+            assert.equal(BigNumber(await chordToken.fee_left_range()).toString(), BigNumber(500).toString());
+            assert.equal(BigNumber(await chordToken.fee_right_range()).toString(), BigNumber(1000).toString());
+        });
+        it('cycles equal to 120', async () => {
+            assert.equal(BigNumber(await chordToken.total_cycle_amount()).toString(), BigNumber(120).toString());
+        });
+        it('500 000 CHORDS are burned and 250 000 are reminted, with initial total supply 100 000 000', async () => {
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(100000000).multipliedBy(DECIMAL_FACTOR).toString());
+
+            await chordToken.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
+
+            assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
+
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(100000000 - 250000).multipliedBy(DECIMAL_FACTOR).toString());
+        });
+        it('amount of burned tokens equals to 30 000 000, final supply equals to 70 000 000', async () => {
+            var t = BigNumber(0);
+            var cycles = await chordToken.total_cycle_amount();
+            var totalSupply = BigNumber(10000000).multipliedBy(DECIMAL_FACTOR);
+            while (t.comparedTo(cycles) == -1) {
+                var ownerBalance = BigNumber(await chordToken.balanceOf(OWNER));
+                var i , j;
+                i = ownerBalance.dividedToIntegerBy(totalSupply);
+                //if ((ownerBalance.modulo(totalSupply)).isEqualTo(BigNumber(0))) {
+                    i = i.minus(BigNumber(1));
+               // }
+
+                for (; i.comparedTo(BigNumber(0)) == 1; i = i.minus(BigNumber(1))) {
+                    if(t.comparedTo(cycles) != -1){
+                        break;
+                    }
+                    assert.equal(BigNumber(await chordToken._getCycle()).toString(), t.toString());
+                    await chordToken.transfer(SOMEBODY, totalSupply);
+                    t = t.plus(BigNumber(1));
+                }
+
+                var somebodyBalance = BigNumber(await chordToken.balanceOf(SOMEBODY));
+                j = somebodyBalance.dividedToIntegerBy(totalSupply);
+
+                //console.log("i: " + i.toString() + " j: " + j.toString());
+
+
+                for (; j.comparedTo(BigNumber(0)) == 1; j = j.minus(BigNumber(1))) {
+                    if(t.comparedTo(cycles) != -1){
+                        break;
+                    }
+                    await chordToken.transfer(OWNER, totalSupply, {from: SOMEBODY});
+                    t = t.plus(BigNumber(1));
+                    assert.equal(BigNumber(await chordToken._getCycle()).toString(), t.toString());
+                }
+            }
+
+            assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(120).toString());
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(0).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), BigNumber(30000000).multipliedBy(DECIMAL_FACTOR).toString());
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(70000000).multipliedBy(DECIMAL_FACTOR).toString());
+        });
+    });
+})
+;
