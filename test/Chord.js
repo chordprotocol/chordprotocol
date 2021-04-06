@@ -4,10 +4,12 @@ const Reverter = require('./helpers/reverter');
 const truffleAssert = require('truffle-assertions');
 
 contract('ChordTest', async (accounts) => {
-        let chordToken;
+    let chordToken;
+    let chordTokenCycle;
 
     const SOMEBODY = accounts[1];
     const NOBODY = accounts[2];
+    const ANYBODY = accounts[3];
     const DECIMAL_FACTOR = BigNumber(100000000);
 
     const reverter = new Reverter(web3);
@@ -22,7 +24,15 @@ contract('ChordTest', async (accounts) => {
             120,
             BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
             5000);
-
+        chordTokenCycle = await Chord.new(
+            BigNumber(100000000).multipliedBy(DECIMAL_FACTOR),
+            8,
+            500,
+            1000,
+            50,
+            2,
+            BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
+            5000);
         await reverter.snapshot();
     });
 
@@ -101,22 +111,19 @@ contract('ChordTest', async (accounts) => {
             assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000 + 60).multipliedBy(DECIMAL_FACTOR)).toString());
         });
         it('transact without fee when cycle finished', async () => {
-            let chordTokenCycle = await Chord.new(
-                BigNumber(100000000).multipliedBy(DECIMAL_FACTOR),
-                8,
-                500,
-                1000,
-                50,
-                1,
-                BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
-                5000);
-
-            await chordTokenCycle.transfer(SOMEBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
-            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
-            await chordTokenCycle.transfer(SOMEBODY, BigNumber(11000000).multipliedBy(DECIMAL_FACTOR));
+            await chordTokenCycle.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordTokenCycle._getCycle()).toString(), BigNumber(1).toString());
+            assert.equal(BigNumber(await chordTokenCycle._getBurnFee()).toString(), BigNumber(500).toString());
+            await chordTokenCycle.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordTokenCycle._getCycle()).toString(), BigNumber(2).toString());
+            assert.equal(BigNumber(await chordTokenCycle._getBurnFee()).toString(), BigNumber(0).toString());
+        });
+        it('transact without fee when burned tocken amount more than has to be', async () => {
+            await chordTokenCycle.transfer(SOMEBODY, BigNumber(50000000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordTokenCycle._getCycle()).toString(), BigNumber(1).toString());
             assert.equal(BigNumber(await chordTokenCycle._getBurnFee()).toString(), BigNumber(0).toString());
         });
+
     });
     describe('includeAccount()', async () => {
         it('must revert on included', async () => {
@@ -127,6 +134,16 @@ contract('ChordTest', async (accounts) => {
         it('must revert on excluded', async () => {
             await chordToken.excludeAccount(SOMEBODY);
             await truffleAssert.reverts(chordToken.excludeAccount(SOMEBODY), 'Account is already excluded');
+        });
+        it('excluded accounts get profit', async () => {
+            await chordToken.transfer(SOMEBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
+            await chordToken.excludeAccount(NOBODY);
+            await chordToken.transfer(NOBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
+
+            //force cycle change
+            await chordToken.transfer(ANYBODY, BigNumber(11000000).multipliedBy(DECIMAL_FACTOR));
+
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).comparedTo(BigNumber(await chordToken.balanceOf(NOBODY))), 1);
         });
     });
 });
