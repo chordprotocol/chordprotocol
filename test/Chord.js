@@ -69,56 +69,44 @@ contract('ChordTest', async (accounts) => {
             //other fee + previous balance
             assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), previousBalance.plus((BigNumber(1500000).multipliedBy(DECIMAL_FACTOR)).minus(BigNumber(82500).multipliedBy(DECIMAL_FACTOR))).toString());
         });
-        // it('fee switch cycle and stay same', async () => {
-        //     let balance = BigNumber(11000000).multipliedBy(DECIMAL_FACTOR);
-        //     balance = BigNumber(await chordToken.reflectionFromToken(balance, true));
-        //     await chordToken.transfer(SOMEBODY, BigNumber(11000000).multipliedBy(DECIMAL_FACTOR));
-        //     assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(550).toString());
-        //     assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
-        //     assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(550000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
-        //
-        //     let totalSupply = BigNumber(100000000 - 550000 + 250000).multipliedBy(DECIMAL_FACTOR);
-        //     assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
-        //
-        //     //balance = BigNumber(await chordToken.tokenFromReflection(balance));
-        //
-        //     assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), (balance.plus(((BigNumber(250000).multipliedBy(balance)).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply))).toString());
-        // });
-        // it('fee over two cycles, but switch to only one, stay the same, supply changed by fee sum', async () => {
-        //     let balance = BigNumber(20500000).multipliedBy(DECIMAL_FACTOR);
-        //     balance = BigNumber(await chordToken.reflectionFromToken(balance, true));
-        //     await chordToken.transfer(SOMEBODY, BigNumber(20500000).multipliedBy(DECIMAL_FACTOR));
-        //     assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
-        //     assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
-        //     assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1025000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
-        //
-        //     let totalSupply = BigNumber(100000000 - 1025000 + 250000).multipliedBy(DECIMAL_FACTOR);
-        //     assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
-        //
-        //     balance = BigNumber(await chordToken.tokenFromReflection(balance));
-        //
-        //     assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), (balance.plus(((BigNumber(250000).multipliedBy(balance)).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply))).toString());
-        // });
-        // it('fee over two cycles, but switch to only one, stays, next small transaction causes burn', async () => {
-        //     let balanceReflection = BigNumber(22000000).multipliedBy(DECIMAL_FACTOR);
-        //     balanceReflection = BigNumber(await chordToken.reflectionFromToken(balanceReflection, true));
-        //     await chordToken.transfer(SOMEBODY, BigNumber(22000000).multipliedBy(DECIMAL_FACTOR));
-        //     assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(600).toString());
-        //     assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
-        //     assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
-        //
-        //     let totalSupply = BigNumber(100000000 - 1100000 + 250000).multipliedBy(DECIMAL_FACTOR);
-        //     assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
-        //
-        //     let balance = BigNumber(await chordToken.tokenFromReflection(balanceReflection));
-        //
-        //     assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), (balance.plus(((BigNumber(250000).multipliedBy(balance)).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply))).toString());
-        //
-        //     await chordToken.transfer(SOMEBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
-        //     assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(600).toString());
-        //     assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(2).toString());
-        //     assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000 + 60).multipliedBy(DECIMAL_FACTOR).minus(BigNumber(await chordToken.amount_for_redistribution()).multipliedBy(BigNumber(2)))).toString());
-        // });
+        it('fee switch cycle and stay same', async () => {
+            await chordToken.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
+            assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(500000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
+
+            let totalSupply = BigNumber(100000000 - 500000 + 250000).multipliedBy(DECIMAL_FACTOR);
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
+
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), ((BigNumber(9500000).multipliedBy(DECIMAL_FACTOR)).plus((BigNumber(9500000).multipliedBy(DECIMAL_FACTOR).multipliedBy(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))).dividedToIntegerBy(totalSupply.minus(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))))).toString());
+        });
+        it('fee over two cycles, but switch to only one, stay the same, supply changed by fee sum', async () => {
+            await chordToken.transfer(SOMEBODY, BigNumber(20500000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(500).toString());
+            assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1025000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
+
+            let totalSupply = BigNumber(100000000 - 1025000 + 250000).multipliedBy(DECIMAL_FACTOR);
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
+
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), (BigNumber(19475000).multipliedBy(DECIMAL_FACTOR).plus(((BigNumber(19475000).multipliedBy(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply.minus(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))))).toString());
+        });
+        it('fee over two cycles, but switch to only one, doesnt stay, next small transaction causes burn', async () => {
+            await chordToken.transfer(SOMEBODY, BigNumber(22000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(600).toString());
+            assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(1).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000).multipliedBy(DECIMAL_FACTOR).minus(await chordToken.amount_for_redistribution())).toString());
+
+            let totalSupply = BigNumber(100000000 - 1100000 + 250000).multipliedBy(DECIMAL_FACTOR);
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), totalSupply.toString());
+
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), (BigNumber(20900000).multipliedBy(DECIMAL_FACTOR).plus(((BigNumber(250000).multipliedBy(BigNumber(20900000).multipliedBy(DECIMAL_FACTOR))).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(totalSupply.minus(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))))).toString());
+
+            await chordToken.transfer(SOMEBODY, BigNumber(1000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(600).toString());
+            assert.equal(BigNumber(await chordToken._getCycle()).toString(), BigNumber(2).toString());
+            assert.equal(BigNumber(await chordToken.totalBurn()).toString(), (BigNumber(1100000 + 60).multipliedBy(DECIMAL_FACTOR).minus(BigNumber(await chordToken.amount_for_redistribution()).multipliedBy(BigNumber(2)))).toString());
+        });
         it('transact without fee when cycle finished', async () => {
             await chordTokenCycle.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordTokenCycle._getCycle()).toString(), BigNumber(1).toString());
@@ -212,9 +200,6 @@ contract('ChordTest', async (accounts) => {
             assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(0).toString());
             assert.equal(BigNumber(await chordToken.totalBurn()).toString(), BigNumber(30000000).multipliedBy(DECIMAL_FACTOR).toString());
             assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(70000000).multipliedBy(DECIMAL_FACTOR).toString());
-
-            // console.log(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString());
-            // console.log(BigNumber(await chordToken.balanceOf(OWNER)).toString());
         });
     });
 })
