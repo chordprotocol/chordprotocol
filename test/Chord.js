@@ -24,7 +24,8 @@ contract('ChordTest', async (accounts) => {
             50,
             120,
             BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
-            5000);
+            5000,
+            OWNER);
         chordTokenCycle = await Chord.new(
             BigNumber(100000000).multipliedBy(DECIMAL_FACTOR),
             8,
@@ -33,7 +34,8 @@ contract('ChordTest', async (accounts) => {
             50,
             2,
             BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
-            5000);
+            5000,
+            OWNER);
         await reverter.snapshot();
     });
 

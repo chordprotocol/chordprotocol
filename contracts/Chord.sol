@@ -512,7 +512,8 @@ contract Chord is Context, IBEP20, Ownable {
         uint256 _fee_change_frequency,
         uint256 _total_cycle_amount,
         uint256 _amount_to_burn,
-        uint256 _percent_for_redistribution
+        uint256 _percent_for_redistribution,
+        address _contract_owner
     ) public {
         require (_fee_left_range < _fee_right_range, "Invalid burn fee range");
 
@@ -537,9 +538,9 @@ contract Chord is Context, IBEP20, Ownable {
             _setBurnFee(fee_left_range);
         }
         
-        _rOwned[_msgSender()] = _rTotal;
+        _rOwned[_contract_owner] = _rTotal;
         
-        emit Transfer(address(0), _msgSender(), _tTotal);
+        emit Transfer(address(0), _contract_owner, _tTotal);
     }
 
     event TransactionFailed(address indexed destination, uint index, bytes data);
