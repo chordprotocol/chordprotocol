@@ -444,7 +444,7 @@ contract Ownable is Context {
     }
 }
 
-contract Chord is Context, IBEP20, Ownable {
+contract ChordProtocol is Context, IBEP20, Ownable {
     struct Transaction {
         bool enabled;
         address destination;
@@ -464,7 +464,7 @@ contract Chord is Context, IBEP20, Ownable {
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
     
-    string  private constant _NAME = 'Chord';
+    string  private constant _NAME = 'Chord Protocol';
     string  private constant _SYMBOL = 'CHORD';
     uint8   private _DECIMALS;
    

@@ -1,4 +1,4 @@
-const Chord = artifacts.require("Chord");
+const ChordProtocol = artifacts.require("ChordProtocol");
 const BigNumber = require('bignumber.js');
 const Reverter = require('./helpers/reverter');
 const truffleAssert = require('truffle-assertions');
@@ -16,7 +16,7 @@ contract('ChordTest', async (accounts) => {
     const reverter = new Reverter(web3);
 
     before('setup', async () => {
-        chordToken = await Chord.new(
+        chordToken = await ChordProtocol.new(
             BigNumber(100000000).multipliedBy(DECIMAL_FACTOR),
             8,
             500,
@@ -26,7 +26,7 @@ contract('ChordTest', async (accounts) => {
             BigNumber(500000).multipliedBy(DECIMAL_FACTOR),
             5000,
             OWNER);
-        chordTokenCycle = await Chord.new(
+        chordTokenCycle = await ChordProtocol.new(
             BigNumber(100000000).multipliedBy(DECIMAL_FACTOR),
             8,
             500,
