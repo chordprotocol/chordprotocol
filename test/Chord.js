@@ -42,6 +42,25 @@ contract('ChordTest', async (accounts) => {
     afterEach('revert', reverter.revert);
 
     describe('redistribution tests', async()=>{
+        it('check that balance changes only when rebase', async()=>{
+            //250000 fee
+            await chordToken.transfer(SOMEBODY, BigNumber(5000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(100000000 - 250000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), BigNumber(5000000-250000).multipliedBy(DECIMAL_FACTOR).toString());
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(750).toString());
+
+            //225000 fee
+            await chordToken.transfer(NOBODY, BigNumber(3000000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken._getBurnFee()).toString(), BigNumber(1000).toString());
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(100000000 - 250000 - 225000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), BigNumber(5000000-250000).multipliedBy(DECIMAL_FACTOR).toString());
+
+            await chordToken.transfer(NOBODY, BigNumber(250000).multipliedBy(DECIMAL_FACTOR));
+            assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(100000000 - 250000).multipliedBy(DECIMAL_FACTOR));
+
+            //assert that balance is greater for percentage
+            assert.equal(BigNumber(await chordToken.balanceOf(SOMEBODY)).toString(), (BigNumber(5000000-250000).multipliedBy(DECIMAL_FACTOR).plus(((BigNumber(5000000-250000).multipliedBy(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))).multipliedBy(DECIMAL_FACTOR)).dividedToIntegerBy(BigNumber(await chordToken.totalSupply()).minus(BigNumber(250000).multipliedBy(DECIMAL_FACTOR))))).toString());
+        });
         it('test double percentage redistribution', async()=>{
             await chordToken.transfer(SOMEBODY, BigNumber(10000000).multipliedBy(DECIMAL_FACTOR));
             assert.equal(BigNumber(await chordToken.totalSupply()).toString(), BigNumber(100000000 - 250000).multipliedBy(DECIMAL_FACTOR));
